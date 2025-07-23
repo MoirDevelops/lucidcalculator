@@ -1,43 +1,4 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -48,7 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+<body class="bg-gray-900 min-h-screen flex items-center justify-center">
     <div id="root"></div>
     <script type="text/babel">
         function Calculator() {
@@ -144,7 +105,7 @@
                     result.cement = result.blend * ratios.cement_to_blend;
                     result.paste = result.blend * ratios.blend_to_paste;
                     result.two_stroke = result.paste * ratios.twostroke_to_paste;
-                    result.coke = result.paste / ratios.paste_to_coke;
+                    result.coke = result.paste * ratios.paste_to_coke;
                     result.acid = result.coke * ratios.acid_to_coke;
                     result.baggies = result.coke * ratios.baggies_to_coke;
                 } else if (inputVariable === 'cement') {
@@ -153,7 +114,7 @@
                     result.leaves = result.blend * ratios.leaves_to_blend;
                     result.paste = result.blend * ratios.blend_to_paste;
                     result.two_stroke = result.paste * ratios.twostroke_to_paste;
-                    result.coke = result.paste / ratios.paste_to_coke;
+                    result.coke = result.paste * ratios.paste_to_coke;
                     result.acid = result.coke * ratios.acid_to_coke;
                     result.baggies = result.coke * ratios.baggies_to_coke;
                 }
@@ -181,13 +142,13 @@
             };
 
             return (
-                <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+                <div className="bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full text-gray-100">
                     <h1 className="text-2xl font-bold text-center mb-4">Lucid Coke Calculator</h1>
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Select Material</label>
+                            <label className="block text-sm font-medium text-gray-200">Select Material</label>
                             <select
-                                className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                className="mt-1 block w-full p-2 bg-gray-700 border border-gray-600 rounded-md text-gray-200 focus:ring-blue-500 focus:border-blue-500"
                                 value={inputVariable}
                                 onChange={(e) => setInputVariable(e.target.value)}
                             >
@@ -202,10 +163,10 @@
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Enter Quantity</label>
+                            <label className="block text-sm font-medium text-gray-200">Enter Quantity</label>
                             <input
                                 type="number"
-                                className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                className="mt-1 block w-full p-2 bg-gray-700 border border-gray-600 rounded-md text-gray-200 focus:ring-blue-500 focus:border-blue-500"
                                 value={inputValue}
                                 onChange={(e) => setInputValue(e.target.value)}
                                 placeholder="Enter quantity"
@@ -215,13 +176,13 @@
                         </div>
                         <div className="flex space-x-2">
                             <button
-                                className="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition"
+                                className="w-full bg-blue-700 text-white p-2 rounded-md hover:bg-blue-800 transition"
                                 onClick={calculateMaterials}
                             >
                                 Calculate
                             </button>
                             <button
-                                className="w-full bg-gray-300 text-gray-700 p-2 rounded-md hover:bg-gray-400 transition"
+                                className="w-full bg-gray-600 text-gray-200 p-2 rounded-md hover:bg-gray-700 transition"
                                 onClick={handleReset}
                             >
                                 Reset
@@ -231,20 +192,20 @@
                     {results && (
                         <div className="mt-6">
                             <div className="flex justify-between items-center">
-                                <h2 className="text-lg font-semibold">Results:</h2>
+                                <h2 className="text-lg font-semibold text-gray-100">Results:</h2>
                                 <button
-                                    className="text-sm text-blue-600 hover:underline"
+                                    className="text-sm text-blue-400 hover:underline"
                                     onClick={copyResults}
                                 >
                                     Copy Results
                                 </button>
                             </div>
                             {results.error ? (
-                                <p className="text-red-600">{results.error}</p>
+                                <p className="text-red-500">{results.error}</p>
                             ) : (
-                                <ul className="list-disc pl-5 mt-2">
+                                <ul className="list-disc pl-5 mt-2 text-gray-200">
                                     {Object.entries(results).map(([key, value]) => (
-                                        <li key={key} className="text-gray-700">
+                                        <li key={key}>
                                             {key.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}: {value}
                                         </li>
                                     ))}

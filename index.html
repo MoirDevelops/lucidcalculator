@@ -1,32 +1,50 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lucid Coke Calculator</title>
+    <link rel="icon" href="favicon.png" type="image/png">
     <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
 </head>
-<body class="bg-gray-900 min-h-screen flex items-center justify-center">
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex items-center justify-center">
     <div id="root"></div>
     <script type="text/babel">
         function Calculator() {
             const [inputVariable, setInputVariable] = React.useState('leaves');
             const [inputValue, setInputValue] = React.useState('');
-            const [repLevel, setRepLevel] = React.useState('over2k'); // default >2K
+            const [repLevel, setRepLevel] = React.useState('over2k');
             const [results, setResults] = React.useState(null);
+            const [isDarkMode, setIsDarkMode] = React.useState(true);
 
-            // Conversion ratios based on provided formulas
+            React.useEffect(() => {
+                if (isDarkMode) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }, [isDarkMode]);
+
+            const toggleTheme = () => {
+                setIsDarkMode(!isDarkMode);
+            };
+
             const ratios = {
-                leaves_to_blend: 2,        // 1000 leaves → 500 blend
-                cement_to_blend: 0.04,     // 20 cement → 500 blend
-                blend_to_paste: 0.4,       // 500 blend → 200 paste
-                twostroke_to_paste: 0.2,   // 40 two-stroke → 200 paste
-                paste_to_coke: 1.5,        // 200 paste → 300 coke
-                acid_to_coke: 1/3,         // 100 acid → 300 coke
-                baggies_to_coke: 1         // 300 baggies → 300 coke
+                leaves_to_blend: 2,
+                cement_to_blend: 0.04,
+                blend_to_paste: 0.4,
+                twostroke_to_paste: 0.2,
+                paste_to_coke: 1.5,
+                acid_to_coke: 1/3,
+                baggies_to_coke: 1
             };
 
             const calculateMaterials = () => {
@@ -39,25 +57,18 @@
                 const multiplier = repLevel === 'over2k' ? 2 : 1;
                 let base_coke = 0;
 
-                // Calculate base coke (before REP multiplier) based on input
-                switch(inputVariable) {
+                switch (inputVariable) {
                     case 'leaves':
-                        const blend_from_leaves = val / ratios.leaves_to_blend;
-                        const paste_from_leaves = blend_from_leaves * ratios.blend_to_paste;
-                        base_coke = paste_from_leaves * ratios.paste_to_coke;
+                        base_coke = (val / ratios.leaves_to_blend * ratios.blend_to_paste) * ratios.paste_to_coke;
                         break;
                     case 'cement':
-                        const blend_from_cement = val / ratios.cement_to_blend;
-                        const paste_from_cement = blend_from_cement * ratios.blend_to_paste;
-                        base_coke = paste_from_cement * ratios.paste_to_coke;
+                        base_coke = (val / ratios.cement_to_blend * ratios.blend_to_paste) * ratios.paste_to_coke;
                         break;
                     case 'blend':
-                        const paste_from_blend = val * ratios.blend_to_paste;
-                        base_coke = paste_from_blend * ratios.paste_to_coke;
+                        base_coke = (val * ratios.blend_to_paste) * ratios.paste_to_coke;
                         break;
                     case 'two_stroke':
-                        const paste_from_ts = val / ratios.twostroke_to_paste;
-                        base_coke = paste_from_ts * ratios.paste_to_coke;
+                        base_coke = (val / ratios.twostroke_to_paste) * ratios.paste_to_coke;
                         break;
                     case 'paste':
                         base_coke = val * ratios.paste_to_coke;
@@ -69,23 +80,11 @@
                         base_coke = val / ratios.baggies_to_coke;
                         break;
                     case 'coke':
-                        base_coke = val / multiplier; // Adjust for REP multiplier
+                        base_coke = val / multiplier;
                         break;
                 }
 
-                // Calculate all materials from base coke
-                const r = {
-                    leaves: 0,
-                    cement: 0,
-                    blend: 0,
-                    two_stroke: 0,
-                    paste: 0,
-                    acid: 0,
-                    baggies: 0,
-                    coke: 0
-                };
-
-                // Back-calculate materials
+                const r = {};
                 r.paste = base_coke / ratios.paste_to_coke;
                 r.blend = r.paste / ratios.blend_to_paste;
                 r.leaves = r.blend * ratios.leaves_to_blend;
@@ -95,16 +94,12 @@
                 r.baggies = base_coke * ratios.baggies_to_coke;
                 r.coke = base_coke * multiplier;
 
-                // Round all to two decimals
-                Object.keys(r).forEach(k => {
-                    if (r[k] !== undefined) r[k] = Math.round(r[k] * 100) / 100;
-                });
+                Object.keys(r).forEach(k => r[k] = Math.round(r[k] * 100) / 100);
 
-                // Adjust input material to match input value exactly
                 if (inputVariable !== 'coke') {
                     r[inputVariable] = val;
                 } else {
-                    r.coke = val; // Ensure coke output matches input when coke is selected
+                    r.coke = val;
                 }
 
                 setResults(r);
@@ -120,20 +115,30 @@
                 alert('Results copied!');
             };
 
+            const materialOrder = ['leaves', 'cement', 'blend', 'two_stroke', 'paste', 'acid', 'baggies', 'coke'];
+
             return (
-                <div className="bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full text-gray-100">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full text-gray-900 dark:text-gray-100 relative">
+                    <div className="absolute top-4 right-4">
+                        <button onClick={toggleTheme} className="p-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 transition" title="Toggle Theme">
+                            {isDarkMode ? '☀️' : '🌙'}
+                        </button>
+                    </div>
+                    <div className="flex justify-center mb-4">
+                        <img src="logo.png" alt="Logo" className="h-16 w-auto" />
+                    </div>
                     <h1 className="text-2xl font-bold text-center mb-4">Lucid Coke Calculator</h1>
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-200">REP Level</label>
-                            <select value={repLevel} onChange={e=>setRepLevel(e.target.value)} className="mt-1 block w-full p-2 bg-gray-700 border border-gray-600 rounded-md text-gray-200 focus:ring-blue-500 focus:border-blue-500">
-                                <option value="under2k">REP ≤ 2K</option>
-                                <option value="over2k">REP > 2K</option>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">REP Level</label>
+                            <select value={repLevel} onChange={e=>setRepLevel(e.target.value)} className="mt-1 block w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-gray-200 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="under2k">REP &lt; 2K</option>
+                                <option value="over2k">REP ≥ 2K</option>
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-200">Select Material</label>
-                            <select value={inputVariable} onChange={e=>setInputVariable(e.target.value)} className="mt-1 block w-full p-2 bg-gray-700 border border-gray-600 rounded-md text-gray-200 focus:ring-blue-500 focus:border-blue-500">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Select Material</label>
+                            <select value={inputVariable} onChange={e=>setInputVariable(e.target.value)} className="mt-1 block w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-gray-200 focus:ring-blue-500 focus:border-blue-500">
                                 <option value="leaves">Leaves</option>
                                 <option value="cement">Cement</option>
                                 <option value="blend">Blend</option>
@@ -145,26 +150,26 @@
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-200">Enter Quantity</label>
-                            <input type="number" value={inputValue} onChange={e=>setInputValue(e.target.value)} className="mt-1 block w-full p-2 bg-gray-700 border border-gray-600 rounded-md text-gray-200 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter quantity" min="0" step="any" />
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Enter Quantity</label>
+                            <input type="number" value={inputValue} onChange={e=>setInputValue(e.target.value)} className="mt-1 block w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-gray-200 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter quantity" min="0" step="any" />
                         </div>
                         <div className="flex space-x-2">
                             <button onClick={calculateMaterials} className="w-full bg-blue-700 text-white p-2 rounded-md hover:bg-blue-800 transition">Calculate</button>
-                            <button onClick={handleReset} className="w-full bg-gray-600 text-gray-200 p-2 rounded-md hover:bg-gray-700 transition">Reset</button>
+                            <button onClick={handleReset} className="w-full bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 p-2 rounded-md hover:bg-gray-400 dark:hover:bg-gray-700 transition">Reset</button>
                         </div>
                     </div>
                     {results && (
                         <div className="mt-6">
                             <div className="flex justify-between items-center">
-                                <h2 className="text-lg font-semibold text-gray-100">Results:</h2>
-                                <button onClick={copyResults} className="text-sm text-blue-400 hover:underline">Copy Results</button>
+                                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Results:</h2>
+                                <button onClick={copyResults} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">Copy Results</button>
                             </div>
                             {results.error ? (
                                 <p className="text-red-500">{results.error}</p>
                             ) : (
-                                <ul className="list-disc pl-5 mt-2 text-gray-200">
-                                    {Object.entries(results).map(([k,v]) => (
-                                        <li key={k}>{k.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}: {v}</li>
+                                <ul className="list-disc pl-5 mt-2 text-gray-800 dark:text-gray-200">
+                                    {materialOrder.map(k => (
+                                        <li key={k} className={k === inputVariable ? 'font-bold' : ''}>{k.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}: {results[k]}</li>
                                     ))}
                                 </ul>
                             )}
